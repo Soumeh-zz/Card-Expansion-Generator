@@ -4,8 +4,10 @@ body {
 }
 
 #navbar {
+  white-space: nowrap;
+  position: relative;
+  overflow-x: auto;
   text-align: justify;
-  overflow: hidden;
   background-color: #333;
   position: fixed;
   top: 0;
@@ -15,7 +17,9 @@ body {
   z-index: 1;
 }
 
-#navbar button {
+
+#navbar button, #navbar label {
+  font-family: Arial, Helvetica, sans-serif;
   border: none;
   background-color: #17ac89;
   padding: 16px;
@@ -43,16 +47,17 @@ body {
   font-size: 16px;
 }
 
-#container input, #container select {
+#container input, #container select, #container textarea {
   display: block;
   padding: 8px;
   margin: 8px;
 }
 
-#container img {
+#cntainer img {
   float: right;
-  height: 272px;
-  max-width: 500px;
   display: block;
   object-fit: contain;
+  float: right;
+  max-width: 500px;
+  height: 224px;
 }
