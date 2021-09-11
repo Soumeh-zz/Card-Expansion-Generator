@@ -1,8 +1,30 @@
 function addCard(json) {
   let div = document.createElement('div');
+  div.classList.add('card');
+  let inputs = document.createElement('div');
+  inputs.classList.add('inputs')
+  let display = document.createElement('div');
+  display.classList.add('display')
+
+  let delete_button = document.createElement('p');
+  delete_button.classList.add('delete')
+  delete_button.onclick = function(event) {
+    if (event.shiftKey) {
+      this.parentElement.remove();
+      save();
+      return;
+    }
+    const check = confirm("Are you sure that you want to delete this card?\nTip: You can skip this message by holding Shift");
+    if (check) {
+      this.parentElement.remove();
+      save()
+    }
+  };
+  delete_button.innerText = 'X';
+  div.append(delete_button);
 
   let img = document.createElement('img');
-  img.onload = function() { this.style.borderLeft = '4px solid ' + colorHash[this.parentElement.getElementsByTagName('select')[0].value] }
+  img.onload = function() { this.style.borderLeft = '6px solid ' + colorHash[this.parentElement.parentElement.getElementsByClassName('inputs')[0].getElementsByTagName('select')[0].value] }
 
   let name = document.createElement('input');
   name.placeholder = 'name';
@@ -10,8 +32,7 @@ function addCard(json) {
   
   let imageURL = document.createElement('input');
   imageURL.placeholder = 'imageURL';
-  imageURL.style.display = 'inline';
-  imageURL.onchange = function() { this.parentElement.getElementsByTagName('img')[0].src = this.value }
+  imageURL.onchange = function() { this.parentElement.parentElement.getElementsByClassName('display')[0].getElementsByTagName('img')[0].src = this.value }
   if (json['imageURL']) {
     img.src = json['imageURL'];
     imageURL.value = json['imageURL'];
@@ -26,50 +47,43 @@ function addCard(json) {
     option.innerText = val;
     rarity.appendChild(option);
   }
-  rarity.onchange = function() { this.parentElement.getElementsByTagName('img')[0].style.borderLeft = '4px solid ' + colorHash[this.value] }
-  rarity.style.display = 'inline';
+  rarity.onchange = function() { this.parentElement.parentElement.getElementsByClassName('display')[0].getElementsByTagName('img')[0].style.borderLeft = '6px solid ' + colorHash[this.value] }
   if (json['rarity']) rarity.value = json['rarity'];
 
   let description = document.createElement('textarea')
   description.rows = 1;
   description.placeholder = 'description';
-  description.style.display = 'block';
   if (json['description']) description.value = json['description'];
 
   let hp = document.createElement('input');
   hp.placeholder = 'hp';
-  hp.style.display = 'inline';
   if (json['hp']) hp.value = json['hp'];
 
   let atk = document.createElement('input');
   atk.placeholder = 'atk';
-  atk.style.display = 'inline';
   if (json['atk']) atk.value = json['atk'];
 
-  div.appendChild(img);
-  div.appendChild(name);
-  div.appendChild(imageURL);
-  div.appendChild(rarity);
-  div.appendChild(description);
-  div.appendChild(hp);
-  div.appendChild(atk);
+  inputs.append(name, description, imageURL, rarity, hp, atk);
+  display.append(img);
+  div.append(inputs, display);
 
-  document.getElementById('container').appendChild(div);
+  document.getElementById('container').append(div);
 
 }
 
 function cardsToJSON() {
-  const cards = document.getElementById('container').getElementsByTagName('div');
+  const cards = document.getElementById('container').getElementsByClassName('card');
   let json = []
   for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
+    let card = cards[i];
+    let inputs = card.getElementsByClassName('inputs')[0];
     const card_data = {
-      'name': card.getElementsByTagName('input')[0].value,
-      'imageURL': card.getElementsByTagName('input')[1].value,
-      'rarity': card.getElementsByTagName('select')[0].value,
-      'description': card.getElementsByTagName('textarea')[0].value,
-      'hp': card.getElementsByTagName('input')[2].value,
-      'atk': card.getElementsByTagName('input')[3].value
+      'name': inputs.getElementsByTagName('input')[0].value,
+      'imageURL': inputs.getElementsByTagName('input')[1].value,
+      'rarity': inputs.getElementsByTagName('select')[0].value,
+      'description': inputs.getElementsByTagName('textarea')[0].value,
+      'hp': inputs.getElementsByTagName('input')[2].value,
+      'atk': inputs.getElementsByTagName('input')[3].value
     };
     json.push(card_data);
   }
@@ -93,7 +107,10 @@ function downloadJSON() {
 
 function resetCards() {
   const check = confirm("Are you sure that you want to reset your cards? \nThere is no way to recover them unless you saved them locally");
-  if (check) document.getElementById('container').innerHTML = '';
+  if (check) {
+    document.getElementById('container').innerHTML = '';
+    save();
+  }
 }
 
 const colorHash = {
@@ -101,11 +118,6 @@ const colorHash = {
   "RARE": "#9FE5ED",
   "SUPER": "#D1A21F",
   "ULTIMATE": "#9E1E9C"
-}
-
-function imageRarityColor(image, rarity) {
-  const color = colorHash[rarity];
-  image.style.borderLeft = '4px solid ' + color;
 }
 
 let storage = window.localStorage;
