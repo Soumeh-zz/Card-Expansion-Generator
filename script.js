@@ -128,6 +128,34 @@ function save() {
 }
 
 function load() {
-  const json = JSON.parse(window.localStorage.getItem('data'));
+  const data = storage.getItem('data');
+  if (data == null) {
+    const URL = 'https://raw.githubusercontent.com/YoshiBleu9427/discord_ybot/master/DefaultCardDefinitions.json';
+    return fetch(URL)
+    .then(response => response.json())
+    .then(data => {
+      addCard(data[0]);
+      storage.setItem('data', []);
+    });
+  }
+  const json = JSON.parse(data);
   if (json) for (let i = 0; i < json.length; i++) addCard(json[i]);
+}
+
+function importCards(file) {
+  var reader = new FileReader();
+  reader.readAsText(file, "UTF-8");
+  reader.onload = function (evt) {
+    const data = evt.target.result;
+    const json = JSON.parse(data);
+    if (json) {
+      const check = confirm("Do you want to reset your current cards?");
+      if (check) document.getElementById('container').innerHTML = '';
+      for (let i = 0; i < json.length; i++) addCard(json[i]);
+    }
+    save();
+  }
+  reader.onerror = function (evt) {
+    console.log("error reading file");
+  }
 }

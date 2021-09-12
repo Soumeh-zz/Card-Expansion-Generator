@@ -21,8 +21,8 @@
   <div id="navbar">
     <button onclick="addCard({})">Add</button>
     <button onclick="downloadJSON()">Download</button>
-    <label for="import"><strike>Import</strike></label>
-    <input id="import" type="file" style="display: none;" onchange="importCards(this.files[0])"/>
+    <label for="import">Import</label>
+    <input id="import" type="file" accept=".json,application/json" style="display: none;" onchange="importCards(this.files[0])"/>
     <button onclick="resetCards()">Reset</button>
   </div>
   <div id="container">
