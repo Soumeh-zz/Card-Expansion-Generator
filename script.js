@@ -1,3 +1,5 @@
+let storage = window.localStorage;
+
 function addCard(json) {
   let div = document.createElement('div');
   div.classList.add('card');
@@ -6,7 +8,7 @@ function addCard(json) {
   let display = document.createElement('div');
   display.classList.add('display')
 
-  let delete_button = document.createElement('p');
+  let delete_button = document.createElement('img');
   delete_button.classList.add('delete')
   delete_button.onclick = function(event) {
     if (event.shiftKey) {
@@ -20,7 +22,7 @@ function addCard(json) {
       save()
     }
   };
-  delete_button.innerText = 'X';
+  delete_button.src = 'https://raw.githubusercontent.com/feathericons/feather/734f3f51144e383cfdc6d0916831be8d1ad2a749/icons/x.svg';
   div.append(delete_button);
 
   let img = document.createElement('img');
@@ -29,7 +31,7 @@ function addCard(json) {
   let name = document.createElement('input');
   name.placeholder = 'name';
   if (json['name']) name.value = json['name'];
-  
+
   let imageURL = document.createElement('input');
   imageURL.placeholder = 'imageURL';
   imageURL.onchange = function() { this.parentElement.parentElement.getElementsByClassName('display')[0].getElementsByTagName('img')[0].src = this.value }
@@ -37,6 +39,26 @@ function addCard(json) {
     img.src = json['imageURL'];
     imageURL.value = json['imageURL'];
   }
+
+  let imageUpload = document.createElement('input');
+  imageUpload.style.display = 'none';
+  imageUpload.type = 'file';
+  imageUpload.accept = 'image/*';
+  imageUpload.onchange = function() {
+    let APIkey = storage.getItem('APIkey')
+    if (!APIkey) APIkey = prompt("You need an ImgBB API Key in order to upload images directly\nTo get one, go to https://api.imgbb.com/ and request one");
+    if (APIkey && this.files) {
+      storage.setItem('APIkey', APIkey);
+      uploadFile(imageURL, this.files[0]);
+    }
+  }
+
+  let imageUploadLable = document.createElement('label');
+  let imageUploadIcon = document.createElement('img');
+
+  imageUploadIcon.src = 'https://raw.githubusercontent.com/feathericons/feather/734f3f51144e383cfdc6d0916831be8d1ad2a749/icons/upload.svg';
+
+  imageUploadLable.append(imageUploadIcon, imageUpload);
 
   let rarity = document.createElement('select');
   const options = ['COMMON', 'RARE', 'SUPER', 'ULTIMATE'];
@@ -63,12 +85,51 @@ function addCard(json) {
   atk.placeholder = 'atk';
   if (json['atk']) atk.value = json['atk'];
 
-  inputs.append(name, description, imageURL, rarity, hp, atk);
+  inputs.append(name, description, imageUploadLable, imageURL, rarity, hp, atk);
   display.append(img);
   div.append(inputs, display);
 
   document.getElementById('container').append(div);
 
+}
+
+function uploadFile(target, file) {
+  var reader = new FileReader();
+
+  reader.onloadend = function() {
+    let b64 = reader.result.replace(/^data:.+;base64,/, '').replaceAll('=', '%3D').replaceAll('+', '%2B');
+    var xhr = new XMLHttpRequest();
+    var url = 'https://api.imgbb.com/1/upload?key=' + storage.getItem('APIkey');
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status == 400) {
+          switch(JSON.parse(xhr.response).error.code) {
+            case 100:
+              alert("Invalid API key");
+              storage.removeItem('APIkey');
+              return;
+            case 102:
+              alert("Invalid base64 string");
+              return;
+          }
+        }
+        else if (xhr.status == 200) {
+          const url = JSON.parse(xhr.response).data.display_url.replace('+', '%2B')
+          target.value = url;
+          target.parentElement.parentElement.getElementsByClassName('display')[0].getElementsByTagName('img')[0].src = url;
+          save();
+        }
+      }
+    };
+
+    xhr.open("POST", url);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.send('image=' + b64.replace('+', ' '));
+
+  };
+  
+  reader.readAsDataURL(file);
 }
 
 function cardsToJSON() {
@@ -79,11 +140,11 @@ function cardsToJSON() {
     let inputs = card.getElementsByClassName('inputs')[0];
     const card_data = {
       'name': inputs.getElementsByTagName('input')[0].value,
-      'imageURL': inputs.getElementsByTagName('input')[1].value,
+      'imageURL': inputs.getElementsByTagName('input')[2].value,
       'rarity': inputs.getElementsByTagName('select')[0].value,
       'description': inputs.getElementsByTagName('textarea')[0].value,
-      'hp': inputs.getElementsByTagName('input')[2].value,
-      'atk': inputs.getElementsByTagName('input')[3].value
+      'hp': inputs.getElementsByTagName('input')[3].value,
+      'atk': inputs.getElementsByTagName('input')[4].value
     };
     json.push(card_data);
   }
@@ -119,8 +180,6 @@ const colorHash = {
   "SUPER": "#D1A21F",
   "ULTIMATE": "#9E1E9C"
 }
-
-let storage = window.localStorage;
 
 function save() {
   let json = JSON.stringify(cardsToJSON());
